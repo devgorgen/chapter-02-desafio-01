@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useContext, useState, useRef, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { api } from '../services/api';
 import { Product, Stock } from '../types';
@@ -31,6 +31,27 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
     return [];
   });
+
+  /*
+    Usando useRef para a cada atualização comparar o esado da carrinho para se ouver diferença atualizar o localstorage
+  */  
+  const prevCartRef = useRef<Product[]>();
+
+  useEffect(() => {
+    prevCartRef.current = cart;
+  });
+
+  const cartPreviousValue = prevCartRef.current ?? cart;
+
+  useEffect(() => {
+    if (cartPreviousValue !== cart) {
+      localStorage.setItem('@RocketShoes:cart', JSON.stringify(cart));
+
+    }
+  }, [cartPreviousValue, cart]);
+
+  // -------------------------- //
+
 
   // Hook para adicionar produtos
   const addProduct = async (productId: number) => {
@@ -78,9 +99,6 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
       // Atualizando estado do carrinho com novo carrinho atualizado.
       setCart(updatedCart);
-
-      localStorage.setItem('@RocketShoes:cart', JSON.stringify(updatedCart));
-
     } catch {
       toast.error('Erro na adição do produto');
     }
@@ -98,7 +116,6 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       if (productIndex >= 0) {
         updatedCart.splice(productIndex, 1);
         setCart(updatedCart);
-        localStorage.setItem('@RocketShoes:cart', JSON.stringify(updatedCart));
       } else {
         throw Error();
       }
@@ -133,7 +150,6 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       if (productExists) {
         productExists.amount = amount;
         setCart(updatedCart);
-        localStorage.setItem('@RocketShoes:cart', JSON.stringify(updatedCart));
       } else {
         throw Error();
       }
